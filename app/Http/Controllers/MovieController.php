@@ -5,20 +5,29 @@ namespace App\Http\Controllers;
 use App\Models\Movie;
 use Illuminate\Http\Request;
 
-class WebMovieController extends Controller
+class MovieController extends Controller
 {
+    // GET: obtener todas las películas
     public function index()
     {
-        $movies = Movie::all();
-
-        return view('movies.index', compact('movies'));
+        return response()->json(Movie::all(), 200);
     }
 
-    public function create()
+    // GET: obtener una película por ID
+    public function show($id)
     {
-        return view('movies.create');
+        $movie = Movie::find($id);
+
+        if (!$movie) {
+            return response()->json([
+                'message' => 'Película no encontrada'
+            ], 404);
+        }
+
+        return response()->json($movie, 200);
     }
 
+    // POST: crear una película
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -28,25 +37,22 @@ class WebMovieController extends Controller
             'cover' => 'required|string|max:255',
         ]);
 
-        Movie::create($validated);
+        $movie = Movie::create($validated);
 
-        return redirect()
-            ->route('movies.index')
-            ->with('success', 'Película agregada correctamente.');
+        return response()->json($movie, 201);
     }
 
-    public function show(Movie $movie)
+    // PUT: actualizar una película
+    public function update(Request $request, $id)
     {
-        return view('movies.show', compact('movie'));
-    }
+        $movie = Movie::find($id);
 
-    public function edit(Movie $movie)
-    {
-        return view('movies.edit', compact('movie'));
-    }
+        if (!$movie) {
+            return response()->json([
+                'message' => 'Película no encontrada'
+            ], 404);
+        }
 
-    public function update(Request $request, Movie $movie)
-    {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'synopsis' => 'required|string',
@@ -56,17 +62,27 @@ class WebMovieController extends Controller
 
         $movie->update($validated);
 
-        return redirect()
-            ->route('movies.index')
-            ->with('success', 'Película actualizada correctamente.');
+        return response()->json([
+            'message' => 'Película actualizada correctamente',
+            'movie' => $movie
+        ], 200);
     }
 
-    public function destroy(Movie $movie)
+    // DELETE: eliminar una película
+    public function destroy($id)
     {
+        $movie = Movie::find($id);
+
+        if (!$movie) {
+            return response()->json([
+                'message' => 'Película no encontrada'
+            ], 404);
+        }
+
         $movie->delete();
 
-        return redirect()
-            ->route('movies.index')
-            ->with('success', 'Película eliminada correctamente.');
+        return response()->json([
+            'message' => 'Película eliminada correctamente'
+        ], 200);
     }
 }
